@@ -1,0 +1,49 @@
+@prefix qps: <https://qps.example/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+qps:QuotationOntology a owl:Ontology .
+
+qps:Quotation a owl:Class .
+qps:CostLine a owl:Class .
+
+qps:identifier a owl:DatatypeProperty ;
+  rdfs:domain qps:Quotation ;
+  rdfs:range xsd:string .
+
+qps:currency a owl:DatatypeProperty ;
+  rdfs:domain qps:Quotation ;
+  rdfs:range xsd:string .
+
+qps:baseCost a owl:DatatypeProperty ;
+  rdfs:domain qps:Quotation ;
+  rdfs:range xsd:decimal .
+
+qps:grandTotal a owl:DatatypeProperty ;
+  rdfs:domain qps:Quotation ;
+  rdfs:range xsd:decimal .
+
+qps:hasCostLine a owl:ObjectProperty ;
+  rdfs:domain qps:Quotation ;
+  rdfs:range qps:CostLine .
+
+qps:category a owl:DatatypeProperty ;
+  rdfs:domain qps:CostLine ;
+  rdfs:range xsd:string .
+
+qps:quantity a owl:DatatypeProperty ;
+  rdfs:domain qps:CostLine ;
+  rdfs:range xsd:decimal .
+
+qps:unitCost a owl:DatatypeProperty ;
+  rdfs:domain qps:CostLine ;
+  rdfs:range xsd:decimal .
+
+qps:amount a owl:DatatypeProperty ;
+  rdfs:domain qps:CostLine ;
+  rdfs:range xsd:decimal .
+
+qps:provenance a owl:DatatypeProperty ;
+  rdfs:domain qps:CostLine ;
+  rdfs:range xsd:string .

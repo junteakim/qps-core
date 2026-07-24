@@ -1,0 +1,22 @@
+{
+  "schema": "qps.public.scope.v1",
+  "repository_history": "fresh",
+  "synthetic_data_only": true,
+  "included": [
+    "configurable quotation arithmetic",
+    "formula-first Excel review workbook",
+    "user-supplied pressure vessel calculation inputs",
+    "RDF and SHACL validation example",
+    "synthetic dashboard UI",
+    "tests and release security gate"
+  ],
+  "excluded": [
+    "customer and vendor records",
+    "emails and attachments",
+    "production prices and commercial margins",
+    "licensed codebook tables and text",
+    "private memory and runtime state",
+    "internal infrastructure endpoints",
+    "private repository history"
+  ]
+}

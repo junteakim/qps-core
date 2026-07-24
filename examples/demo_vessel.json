@@ -1,0 +1,43 @@
+{
+  "schema": "qps.public.demo_input.v1",
+  "synthetic_demo": true,
+  "quote_id": "DEMO-Q-001",
+  "currency": "DEMO",
+  "overhead_percent": "10",
+  "profit_percent": "8",
+  "vessel": {
+    "tag": "DEMO-V-001",
+    "design_pressure_mpa": "1.6",
+    "inside_diameter_mm": "1200",
+    "corrosion_allowance_mm": "3",
+    "mill_tolerance_fraction": "0.125",
+    "material": {
+      "allowable_stress_mpa": "138",
+      "joint_efficiency": "0.85",
+      "source_reference": "USER_SUPPLIED_SYNTHETIC_VALUE"
+    }
+  },
+  "head": {
+    "inside_depth_mm": "300"
+  },
+  "cost_lines": [
+    {
+      "category": "Synthetic plate material",
+      "quantity": "2",
+      "unit_cost": "1200",
+      "provenance": "SYNTHETIC_DEMO_RATE"
+    },
+    {
+      "category": "Synthetic fabrication labor",
+      "quantity": "80",
+      "unit_cost": "75",
+      "provenance": "SYNTHETIC_DEMO_RATE"
+    },
+    {
+      "category": "Synthetic inspection allowance",
+      "quantity": "1",
+      "unit_cost": "900",
+      "provenance": "SYNTHETIC_DEMO_RATE"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+@prefix qps: <https://qps.example/ontology#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+qps:QuotationShape
+  a sh:NodeShape ;
+  sh:targetClass qps:Quotation ;
+  sh:property [
+    sh:path qps:identifier ;
+    sh:minCount 1 ;
+    sh:minLength 1 ;
+    sh:datatype xsd:string
+  ] ;
+  sh:property [
+    sh:path qps:currency ;
+    sh:minCount 1 ;
+    sh:minLength 1 ;
+    sh:datatype xsd:string
+  ] ;
+  sh:property [
+    sh:path qps:baseCost ;
+    sh:minCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+  sh:property [
+    sh:path qps:grandTotal ;
+    sh:minCount 1 ;
+    sh:datatype xsd:decimal
+  ] ;
+  sh:property [
+    sh:path qps:hasCostLine ;
+    sh:minCount 1 ;
+    sh:class qps:CostLine
+  ] .
+
+qps:CostLineShape
+  a sh:NodeShape ;
+  sh:targetClass qps:CostLine ;
+  sh:property [
+    sh:path qps:category ;
+    sh:minCount 1 ;
+    sh:minLength 1 ;
+    sh:datatype xsd:string
+  ] ;
+  sh:property [
+    sh:path qps:quantity ;
+    sh:minCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0
+  ] ;
+  sh:property [
+    sh:path qps:unitCost ;
+    sh:minCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0
+  ] ;
+  sh:property [
+    sh:path qps:amount ;
+    sh:minCount 1 ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0
+  ] ;
+  sh:property [
+    sh:path qps:provenance ;
+    sh:minCount 1 ;
+    sh:minLength 1 ;
+    sh:datatype xsd:string
+  ] .
