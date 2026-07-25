@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qps-core"
-version = "0.1.0"
-description = "Data-agnostic pressure vessel quotation framework"
+version = "0.3.0"
+description = "Auditable workflow kernel for high-mix, low-volume production"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

@@ -18,4 +18,7 @@ jobs:
           cache: pip
       - run: python -m pip install -e ".[dev]"
       - run: pytest
+      - run: python examples/generic_workflow.py --output generic-output
+      - run: python examples/high_mix_low_volume.py --output hmlv-output
+      - run: qps-core demo --output demo-output
       - run: python scripts/verify_public_release.py .

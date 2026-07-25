@@ -1,5 +1,5 @@
 {
-  "schema": "qps.public.demo_input.v1",
+  "schema": "qps.public.workflow_input.v1",
   "synthetic_demo": true,
   "quote_id": "DEMO-Q-001",
   "currency": "DEMO",
