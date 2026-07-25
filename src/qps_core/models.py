@@ -8,9 +8,10 @@ MONEY_QUANTUM = Decimal("0.01")
 
 
 def as_decimal(value: Decimal | float | str) -> Decimal:
-    if isinstance(value, Decimal):
-        return value
-    return Decimal(str(value))
+    converted = value if isinstance(value, Decimal) else Decimal(str(value))
+    if not converted.is_finite():
+        raise ValueError("numeric values must be finite")
+    return converted
 
 
 def money(value: Decimal) -> Decimal:
@@ -136,6 +137,7 @@ class QuoteSnapshot:
     lines: tuple[CostLine, ...]
     overhead_percent: Decimal
     profit_percent: Decimal
+    synthetic_demo: bool = True
 
     @property
     def base_cost(self) -> Decimal:
@@ -160,7 +162,7 @@ class QuoteSnapshot:
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema": "qps.public.quote_snapshot.v1",
-            "synthetic_demo": True,
+            "synthetic_demo": self.synthetic_demo,
             "quote_id": self.quote_id,
             "currency": self.currency,
             "lines": [line.to_dict() for line in self.lines],

@@ -13,6 +13,7 @@ class QuoteEngine:
         quote_id: str,
         currency: str,
         lines: Iterable[CostLine],
+        synthetic_demo: bool = True,
         overhead_percent: Decimal | float | str = Decimal(0),
         profit_percent: Decimal | float | str = Decimal(0),
     ) -> QuoteSnapshot:
@@ -20,6 +21,8 @@ class QuoteEngine:
             raise ValueError("quote_id is required")
         if not currency.strip():
             raise ValueError("currency is required")
+        if not isinstance(synthetic_demo, bool):
+            raise TypeError("synthetic_demo must be a boolean")
         prepared = tuple(lines)
         if not prepared:
             raise ValueError("at least one cost line is required")
@@ -30,6 +33,7 @@ class QuoteEngine:
         return QuoteSnapshot(
             quote_id=quote_id,
             currency=currency,
+            synthetic_demo=synthetic_demo,
             lines=prepared,
             overhead_percent=overhead,
             profit_percent=profit,

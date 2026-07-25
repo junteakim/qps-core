@@ -7,13 +7,17 @@
     "formula-first Excel review workbook",
     "user-supplied pressure vessel calculation inputs",
     "RDF and SHACL validation example",
+    "fail-closed caller-signoff gate",
+    "artifact provenance hashes and pipeline receipt",
     "synthetic dashboard UI",
     "tests and release security gate"
   ],
   "excluded": [
     "customer and vendor records",
+    "customer-specific pricing and inference rules",
     "emails and attachments",
     "production prices and commercial margins",
+    "private benchmarks and authenticated approval adapters",
     "licensed codebook tables and text",
     "private memory and runtime state",
     "internal infrastructure endpoints",
