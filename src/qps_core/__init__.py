@@ -5,6 +5,12 @@ from qps_core.asme import (
     calculate_shell_thickness,
 )
 from qps_core.excel import build_review_workbook, verify_formula_workbook
+from qps_core.kernel import (
+    StageOutcome,
+    WorkflowContext,
+    WorkflowKernel,
+    WorkflowStage,
+)
 from qps_core.models import (
     CostLine,
     EllipticalHeadInput,
@@ -31,9 +37,13 @@ __all__ = [
     "PublicWorkflowRequest",
     "QuoteEngine",
     "QuoteSnapshot",
+    "StageOutcome",
     "ThicknessResult",
     "VesselInput",
+    "WorkflowContext",
     "WorkflowInputError",
+    "WorkflowKernel",
+    "WorkflowStage",
     "build_review_workbook",
     "calculate_elliptical_head_2_to_1_thickness",
     "calculate_shell_mawp",

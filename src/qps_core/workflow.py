@@ -16,6 +16,12 @@ from qps_core.excel import (
     verify_formula_workbook,
     write_snapshot,
 )
+from qps_core.kernel import (
+    StageOutcome,
+    WorkflowContext,
+    WorkflowKernel,
+    WorkflowStage,
+)
 from qps_core.models import (
     CostLine,
     EllipticalHeadInput,
@@ -211,82 +217,25 @@ def run_public_workflow(
     *,
     signoff: CallerSignoff | None = None,
 ) -> dict[str, Any]:
-    output = Path(output_dir)
-    output.mkdir(parents=True, exist_ok=True)
-    request = PublicWorkflowRequest.from_dict(payload)
-
-    normalized_path = _write_json(
-        output / "normalized_request.json",
-        request.to_dict(),
+    context = PRESSURE_VESSEL_WORKFLOW.run(
+        payload,
+        output_dir,
+        initial_values={"signoff": signoff},
     )
-    shell = calculate_shell_thickness(request.vessel)
-    head = calculate_elliptical_head_2_to_1_thickness(request.head)
-    engineering_path = _write_json(
-        output / "engineering_demo.json",
-        {
-            "schema": "qps.public.engineering_demo.v1",
-            "synthetic_demo": request.synthetic_demo,
-            "tag": request.vessel.tag,
-            "shell": shell.to_dict(),
-            "elliptical_head": head.to_dict(),
-        },
-    )
-    snapshot = _calculate_snapshot(request)
-    snapshot_path = write_snapshot(
-        snapshot,
-        output / "final_snapshot.json",
-    )
-    workbook_path = build_review_workbook(
-        snapshot,
-        output / "review_workbook.xlsx",
-    )
-
-    formula_issues = verify_formula_workbook(workbook_path)
-    ontology_result = validate_snapshot(snapshot.to_dict())
-    gates = [
-        _gate(
-            "formula_contract",
-            not formula_issues,
-            f"issues={len(formula_issues)}",
-        ),
-        _gate(
-            "ontology_shacl",
-            ontology_result.conforms,
-            "conforms" if ontology_result.conforms else "does_not_conform",
-        ),
-        _gate(
-            "caller_signoff",
-            signoff is not None,
-            (signoff.signoff_reference if signoff is not None else "signoff_absent"),
-        ),
-    ]
-    workflow_complete = all(gate["status"] == "PASS" for gate in gates)
+    request = _request_from_context(context)
+    formula_issues = context.values["formula_issues"]
+    ontology_result = context.values["ontology_result"]
+    gates = [dict(gate) for gate in context.gates]
+    workflow_complete = context.status == "PASS"
     artifacts = [
-        _artifact("engineering", engineering_path, output),
-        _artifact("normalized_request", normalized_path, output),
-        _artifact("quote_snapshot", snapshot_path, output),
-        _artifact("review_workbook", workbook_path, output),
+        _artifact(identifier, path, context.output_dir)
+        for identifier, path in context.artifacts.items()
     ]
     receipt = {
         "schema": RECEIPT_SCHEMA,
         "synthetic_demo": request.synthetic_demo,
         "request_fingerprint": _payload_hash(request.to_dict()),
-        "workflow": [
-            _stage("normalize", "normalized_request"),
-            _stage("engineering", "engineering"),
-            _stage("quotation", "quote_snapshot"),
-            _stage("formula_first_review", "review_workbook"),
-            _stage(
-                "validation",
-                "formula_contract,ontology_shacl",
-                passed=not formula_issues and ontology_result.conforms,
-            ),
-            _stage(
-                "approval",
-                "caller_signoff",
-                passed=signoff is not None,
-            ),
-        ],
+        "workflow": [dict(stage) for stage in context.stage_records],
         "artifacts": artifacts,
         "gates": gates,
         "signoff": (
@@ -305,17 +254,17 @@ def run_public_workflow(
         },
         "public_boundary": PUBLIC_BOUNDARY,
     }
-    receipt_path = _write_json(output / "pipeline_receipt.json", receipt)
+    receipt_path = _write_json(context.output_dir / "pipeline_receipt.json", receipt)
     receipt_issues = verify_pipeline_receipt(receipt_path)
     if receipt_issues:
         raise RuntimeError(f"pipeline receipt verification failed: {receipt_issues}")
 
     return {
         "synthetic_demo": request.synthetic_demo,
-        "workbook": str(workbook_path),
-        "snapshot": str(snapshot_path),
-        "engineering": str(engineering_path),
-        "normalized_request": str(normalized_path),
+        "workbook": str(context.artifacts["review_workbook"]),
+        "snapshot": str(context.artifacts["quote_snapshot"]),
+        "engineering": str(context.artifacts["engineering"]),
+        "normalized_request": str(context.artifacts["normalized_request"]),
         "pipeline_receipt": str(receipt_path),
         "formula_verifier": "PASS" if not formula_issues else "FAIL",
         "shacl": "PASS" if ontology_result.conforms else "FAIL",
@@ -325,6 +274,111 @@ def run_public_workflow(
         "approval_trust_model": "caller_asserted",
         "signoff_authentication_included": False,
     }
+
+
+def _normalize_stage(context: WorkflowContext) -> StageOutcome:
+    request = PublicWorkflowRequest.from_dict(context.payload)
+    context.values["request"] = request
+    target = _write_json(
+        context.output_dir / "normalized_request.json",
+        request.to_dict(),
+    )
+    context.register_artifact("normalized_request", target)
+    return StageOutcome("PASS", "normalized_request")
+
+
+def _engineering_stage(context: WorkflowContext) -> StageOutcome:
+    request = _request_from_context(context)
+    shell = calculate_shell_thickness(request.vessel)
+    head = calculate_elliptical_head_2_to_1_thickness(request.head)
+    target = _write_json(
+        context.output_dir / "engineering_demo.json",
+        {
+            "schema": "qps.public.engineering_demo.v1",
+            "synthetic_demo": request.synthetic_demo,
+            "tag": request.vessel.tag,
+            "shell": shell.to_dict(),
+            "elliptical_head": head.to_dict(),
+        },
+    )
+    context.register_artifact("engineering", target)
+    return StageOutcome("PASS", "engineering")
+
+
+def _quotation_stage(context: WorkflowContext) -> StageOutcome:
+    snapshot = _calculate_snapshot(_request_from_context(context))
+    context.values["snapshot"] = snapshot
+    target = write_snapshot(
+        snapshot,
+        context.output_dir / "final_snapshot.json",
+    )
+    context.register_artifact("quote_snapshot", target)
+    return StageOutcome("PASS", "quote_snapshot")
+
+
+def _review_stage(context: WorkflowContext) -> StageOutcome:
+    snapshot = context.values["snapshot"]
+    if not isinstance(snapshot, QuoteSnapshot):
+        raise TypeError("quotation stage did not produce QuoteSnapshot")
+    target = build_review_workbook(
+        snapshot,
+        context.output_dir / "review_workbook.xlsx",
+    )
+    context.register_artifact("review_workbook", target)
+    return StageOutcome("PASS", "review_workbook")
+
+
+def _validation_stage(context: WorkflowContext) -> StageOutcome:
+    snapshot = context.values["snapshot"]
+    if not isinstance(snapshot, QuoteSnapshot):
+        raise TypeError("quotation stage did not produce QuoteSnapshot")
+    formula_issues = verify_formula_workbook(context.artifacts["review_workbook"])
+    ontology_result = validate_snapshot(snapshot.to_dict())
+    context.values["formula_issues"] = formula_issues
+    context.values["ontology_result"] = ontology_result
+    context.record_gate(
+        "formula_contract",
+        not formula_issues,
+        f"issues={len(formula_issues)}",
+    )
+    context.record_gate(
+        "ontology_shacl",
+        ontology_result.conforms,
+        "conforms" if ontology_result.conforms else "does_not_conform",
+    )
+    passed = not formula_issues and ontology_result.conforms
+    return StageOutcome(
+        "PASS" if passed else "HOLD",
+        "formula_contract,ontology_shacl",
+    )
+
+
+def _approval_stage(context: WorkflowContext) -> StageOutcome:
+    signoff = context.values["signoff"]
+    if signoff is not None and not isinstance(signoff, CallerSignoff):
+        raise TypeError("signoff must be CallerSignoff or None")
+    context.record_gate(
+        "caller_signoff",
+        signoff is not None,
+        signoff.signoff_reference if signoff is not None else "signoff_absent",
+    )
+    return StageOutcome(
+        "PASS" if signoff is not None else "HOLD",
+        "caller_signoff",
+    )
+
+
+PRESSURE_VESSEL_WORKFLOW = WorkflowKernel(
+    "pressure_vessel_quotation",
+    (
+        WorkflowStage("normalize", _normalize_stage),
+        WorkflowStage("engineering", _engineering_stage),
+        WorkflowStage("quotation", _quotation_stage),
+        WorkflowStage("formula_first_review", _review_stage),
+        WorkflowStage("validation", _validation_stage),
+        WorkflowStage("approval", _approval_stage),
+    ),
+)
 
 
 def verify_pipeline_receipt(path: str | Path) -> list[str]:
@@ -471,6 +525,13 @@ def _calculate_snapshot(request: PublicWorkflowRequest) -> QuoteSnapshot:
     )
 
 
+def _request_from_context(context: WorkflowContext) -> PublicWorkflowRequest:
+    request = context.values["request"]
+    if not isinstance(request, PublicWorkflowRequest):
+        raise TypeError("normalize stage did not produce PublicWorkflowRequest")
+    return request
+
+
 def _require_mapping(value: Any, name: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise WorkflowInputError(f"{name} must be an object")
@@ -522,25 +583,4 @@ def _artifact(identifier: str, path: Path, root: Path) -> dict[str, str]:
         "id": identifier,
         "path": path.resolve().relative_to(root.resolve()).as_posix(),
         "sha256": _file_hash(path),
-    }
-
-
-def _gate(identifier: str, passed: bool, evidence: str) -> dict[str, str]:
-    return {
-        "id": identifier,
-        "status": "PASS" if passed else "HOLD",
-        "evidence": evidence,
-    }
-
-
-def _stage(
-    identifier: str,
-    output_reference: str,
-    *,
-    passed: bool = True,
-) -> dict[str, str]:
-    return {
-        "id": identifier,
-        "status": "PASS" if passed else "HOLD",
-        "output_reference": output_reference,
     }
