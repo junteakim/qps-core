@@ -54,6 +54,29 @@ python examples/generic_workflow.py --output generic-output
 
 The kernel is intentionally small. Domain adapters own their input schemas, calculations, authorization, and receipt contracts.
 
+## High-mix, low-volume production
+
+`RoutedWorkflowKernel` adds job-shop routing without putting production know-how into the public core. Every `WorkOrder` declares its own revision, quantity, payload, and ordered route through a trusted stage catalog.
+
+The production layer provides:
+
+- Different routes for different work orders in one batch
+- A payload fingerprint and traveler artifacts for order-level traceability
+- Fail-closed routing that stops downstream stages after an order enters `HOLD`
+- Isolation that allows later work orders to continue after another order enters `HOLD`
+- Fresh numbered output directories that do not use external work order identifiers as paths
+- A `production_batch.json` manifest with completed and remaining routes
+
+The batch runner is an execution and traceability primitive. It does not include production scheduling optimization, shop capacity, private process rules, or ERP authorization.
+
+Run the synthetic job-shop example:
+
+```bash
+python examples/high_mix_low_volume.py --output hmlv-output
+```
+
+The example runs three small work orders with two route variants. One order enters `HOLD` at its material gate, its downstream inspection is not executed, and the other orders still complete.
+
 ## Quick start
 
 ```bash
@@ -150,6 +173,29 @@ python examples/generic_workflow.py --output generic-output
 ```
 
 커널은 의도적으로 작게 유지됩니다. 도메인 어댑터가 입력 스키마, 계산, 권한 확인, receipt 계약을 소유합니다.
+
+## 다품종 소량생산
+
+`RoutedWorkflowKernel`은 운영 노하우를 공개 코어에 넣지 않고 job-shop 라우팅을 추가합니다. 각 `WorkOrder`는 자체 개정, 수량, payload, 신뢰된 단계 catalog를 통과하는 순서화된 route를 선언합니다.
+
+생산 계층은 다음 기능을 제공합니다.
+
+- 하나의 batch에서 작업지시별로 서로 다른 route 실행
+- 주문 단위 추적성을 위한 payload fingerprint와 traveler 산출물
+- 주문이 `HOLD`에 들어가면 후속 단계를 중단하는 fail-closed 라우팅
+- 한 주문이 `HOLD`여도 뒤의 다른 주문은 계속 실행하는 격리
+- 외부 작업지시 식별자를 경로로 사용하지 않는 새로운 번호형 출력 디렉터리
+- 완료 route와 잔여 route를 기록하는 `production_batch.json` manifest
+
+Batch runner는 실행과 추적성 기반 기능입니다. 생산 일정 최적화, 공장 capacity, 비공개 공정 규칙, ERP 권한 확인은 포함하지 않습니다.
+
+합성 job-shop 예제는 다음과 같이 실행합니다.
+
+```bash
+python examples/high_mix_low_volume.py --output hmlv-output
+```
+
+예제는 두 가지 route를 사용하는 소량 작업지시 세 건을 실행합니다. 한 주문은 재질 gate에서 `HOLD`가 되어 후속 검사를 실행하지 않으며, 나머지 주문은 계속 완료됩니다.
 
 ## 빠른 시작
 

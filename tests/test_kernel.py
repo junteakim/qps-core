@@ -88,6 +88,32 @@ def test_kernel_reports_hold_without_hiding_later_stages(tmp_path: Path) -> None
     assert [stage["status"] for stage in result.stage_records] == ["HOLD", "PASS"]
 
 
+def test_kernel_can_stop_after_hold_for_fail_closed_routing(
+    tmp_path: Path,
+) -> None:
+    executed: list[str] = []
+
+    def hold(context: WorkflowContext) -> StageOutcome:
+        executed.append("hold")
+        return StageOutcome("HOLD", "review")
+
+    def downstream(context: WorkflowContext) -> StageOutcome:
+        executed.append("downstream")
+        return StageOutcome("PASS", "memory")
+
+    result = WorkflowKernel(
+        "fail_closed_route",
+        (
+            WorkflowStage("hold", hold),
+            WorkflowStage("downstream", downstream),
+        ),
+    ).run({}, tmp_path, stop_on_hold=True)
+
+    assert result.status == "HOLD"
+    assert executed == ["hold"]
+    assert [stage["id"] for stage in result.stage_records] == ["hold"]
+
+
 def test_kernel_rejects_duplicate_stage_identifiers() -> None:
     def stage(context: WorkflowContext) -> StageOutcome:
         return StageOutcome("PASS", "memory")

@@ -5,6 +5,8 @@
   "included": [
     "domain-neutral sequential workflow kernel",
     "caller-defined stages, gates, and artifact registration",
+    "per-order routes, revisions, quantities, and trace manifests",
+    "fail-closed order holds with independent batch execution",
     "configurable quotation arithmetic",
     "formula-first Excel review workbook",
     "user-supplied pressure vessel calculation inputs",
@@ -20,6 +22,7 @@
     "emails and attachments",
     "production prices and commercial margins",
     "private benchmarks and authenticated approval adapters",
+    "production scheduling optimization and shop capacity data",
     "dynamic plugin loading and arbitrary command execution",
     "sandboxing for untrusted stage handlers",
     "licensed codebook tables and text",

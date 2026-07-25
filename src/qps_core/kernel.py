@@ -122,6 +122,7 @@ class WorkflowKernel:
         output_dir: str | Path,
         *,
         initial_values: dict[str, Any] | None = None,
+        stop_on_hold: bool = False,
     ) -> WorkflowContext:
         if not isinstance(payload, dict):
             raise TypeError("payload must be a dictionary")
@@ -144,6 +145,8 @@ class WorkflowKernel:
                     "output_reference": outcome.output_reference,
                 }
             )
+            if stop_on_hold and context.status == "HOLD":
+                break
         return context
 
 

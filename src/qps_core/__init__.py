@@ -19,6 +19,14 @@ from qps_core.models import (
     ThicknessResult,
     VesselInput,
 )
+from qps_core.production import (
+    PRODUCTION_BATCH_SCHEMA,
+    ProductionBatchResult,
+    RoutedWorkflowKernel,
+    WorkOrder,
+    WorkOrderResult,
+    work_order_from_context,
+)
 from qps_core.quotation import QuoteEngine
 from qps_core.workflow import (
     CallerSignoff,
@@ -29,17 +37,22 @@ from qps_core.workflow import (
 )
 
 __all__ = [
+    "PRODUCTION_BATCH_SCHEMA",
     "ApplicabilityError",
     "CallerSignoff",
     "CostLine",
     "EllipticalHeadInput",
     "MaterialProperties",
+    "ProductionBatchResult",
     "PublicWorkflowRequest",
     "QuoteEngine",
     "QuoteSnapshot",
+    "RoutedWorkflowKernel",
     "StageOutcome",
     "ThicknessResult",
     "VesselInput",
+    "WorkOrder",
+    "WorkOrderResult",
     "WorkflowContext",
     "WorkflowInputError",
     "WorkflowKernel",
@@ -51,6 +64,7 @@ __all__ = [
     "run_public_workflow",
     "verify_formula_workbook",
     "verify_pipeline_receipt",
+    "work_order_from_context",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
